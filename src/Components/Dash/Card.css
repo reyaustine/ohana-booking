@@ -1,0 +1,51 @@
+/* src/Components/Dash/Card.css */
+.card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin: 10px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+  
+  .card-content {
+    display: flex;
+    align-items: center;
+  }
+  
+  .card-icon {
+    font-size: 40px;
+    margin-right: 20px;
+  }
+  
+  .card-info {
+    text-align: left;
+  }
+  
+  .card-info h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .card-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 5px 0;
+  }
+  
+  .card-trend {
+    font-size: 14px;
+    margin: 0;
+  }
+  
+  .card-trend.up {
+    color: green;
+  }
+  
+  .card-trend.down {
+    color: red;
+  }
+  

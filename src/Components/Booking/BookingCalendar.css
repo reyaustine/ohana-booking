@@ -1,0 +1,12 @@
+/* src/Components/Booking/BookingCalendar.css */
+
+.booking-calendar {
+    padding: 1rem;
+  }
+  
+  .rbc-calendar {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  

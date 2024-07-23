@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "ohana-b97d9",
+  "private_key_id": "137236e1825aa5ada89436e4227197ecdd0bcf0d",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDa27M4b1G/tVv/\nyCpyYPjKNyBP2EZjXO98CrIzwgAUAdyK2E5adMGFHnUS05NzZ/4g492bKRr+CmqW\nwQFHVU2V/L2fvr/RhtV5tEQc6RTMTWEa73m3FgEIkknZlxH7DqeT/3eY4CjQrdRg\nwKvBKLAi1sDeK4Of7YIdORoGtnj98N9mHQBdbJ2ngAwDHsA63BeFvIoTU2/dgBRo\n5x5xTLmmJZHC12XyKuzUyjBy89Qra98w/BCc7+YocF9KqJbqmNfolyNTONzAehfO\n4/ksIq/VsqxmPLWZ8pbQHGKI64X/Rh2GgojtAWghHciC/GLNnUbRsQLvOvUcZC4H\nR0PEACptAgMBAAECggEAANVz1zSUpKZ4uGIUPsowjB8iWsu2RFw+47Z7Xq7PIxYc\nfPslcYOQG190eJ7Gr1SBTnDO1hrfp4ryVuDsEq4rB3LKu/Vf976obfIMLZCSs+X6\nY+F2+PZ6xObiyZxp0guQRx5vLkPOh6ndiax3D3vFKHOqDHRrlnF7kdLAWEPULFtx\npn4Gyy8ANjz7i1QAbIeYz8FFBzPc61nxxXBAp3tKnOfA0FhUNc0kKce5ATH9BlJZ\nKSQmecwMEZuW+O7k6VPauyYQvdF2zDOYN+kF/JroCtWvLiw09gqi3Si7vlt1lqyW\ncFulamIKB7F0EyWTefxAB32ak91QY6ypQbiEWrrb1wKBgQD1bkDExZ0yZUYptOyv\ndWAhXcWCCyJGBB9C/EEduMdseIO2D+wm9JTDuCFXmIMuQF3/Hnb1WiU2knGadH00\nYqLb1hh78uSibKW2kV0K3xXYh/1WNkcGr97P3StbDyAIyH0ifxUBosemBhew/mGT\nZgVYag9kCOBBQhZwjDZKJwqbDwKBgQDkSH/NxK1uePR0NfeeHu4rHIXlMzAE8mDo\nltdCLLOzpLMDrYwSBXWoqIJKjid9X1Dwn7sX3kze99R7dD2w4ckrUEcQ8SAdXmQM\naaIQq+h+xlOdOoOCGhfKP0VEH4bABl8iXiClcegzDYbD5VErmdrCURSD3dlgdmIO\nt/VU+6sSwwKBgBddUp8o7OkiSQapaarecrNaePYDV1TxCYTX/N72e02xP2CyrVmc\nCRmEyu/K3homGIyz+sEqvsYuNNBubIjzJuvkutn56pgn3bK+reveBvdhItX1Pte9\nIGoLdRgrHXKYm4kQLhDEzVrZ06GO5f0hRjr/hc2RJsAvqXE3d+ehRdozAoGACs7/\n9h8s0wE5GdOAUOVIA5SLJmoBCQrs2bZipMh3Dbdrnm32JthJVN39pUgLyJzduTbm\n5d9pplj3n4zGavyVyM45Py0bhyhz9j5+JOnuzSnYxaYCmgNgQvwx7GLNv4PNt1Pb\nmdnF07z9N4NBD55uRCsQnJnBdBbG18mP/SEZXX8CgYAwwQUGNso8awm20++TxBww\nbJRuJbUyRCkmJcpz+MS6mAE3S+w7/JSOqtbSVUjngHO1VRA07barsZx5lhxGKdP3\na0S35uvZqDbtgD1//oAxKKg1xSjQNn3v69ZKJdKkmLtU8Csrla+XHiaUY2+Uo1K2\nxQZKhRgG1GeisKqSyH+BXQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "ohana-34@ohana-b97d9.iam.gserviceaccount.com",
+  "client_id": "114768671832028378050",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/ohana-34%40ohana-b97d9.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
