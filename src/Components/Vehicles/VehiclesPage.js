@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs, doc, updateDoc, Timestamp } from 'firebase/firestore';
-import { db, auth } from '../../firebase'; // Adjust the path as needed
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, auth, storage } from '../../firebase'; // Adjust the path as needed
 import './VehiclesPage.css';
 
 const VehiclesPage = () => {
   const [vehicles, setVehicles] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [currentVehicle, setCurrentVehicle] = useState(null);
   const [newVehicle, setNewVehicle] = useState({
     name: '',
@@ -31,7 +33,8 @@ const VehiclesPage = () => {
     addedBy: 'Admin User',
     addedDate: Timestamp.now(),
     updatedBy: 'N/A',
-    updatedDate: 'N/A'
+    updatedDate: 'N/A',
+    photoURL: ''
   });
 
   useEffect(() => {
@@ -39,7 +42,8 @@ const VehiclesPage = () => {
       const querySnapshot = await getDocs(collection(db, 'vehicles'));
       const vehicleData = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        repairs: doc.data().repairs || [] // Ensure repairs is an array
       }));
       setVehicles(vehicleData);
     };
@@ -57,6 +61,26 @@ const VehiclesPage = () => {
     setCurrentVehicle((prevVehicle) => ({ ...prevVehicle, [name]: value }));
   };
 
+  const handleUpload = (e) => {
+    const file = e.target.files[0];
+    const storageRef = ref(storage, `vehiclePhotos/${file.name}`);
+    uploadBytes(storageRef, file).then((snapshot) => {
+      getDownloadURL(snapshot.ref).then((url) => {
+        setNewVehicle((prevVehicle) => ({ ...prevVehicle, photoURL: url }));
+      });
+    });
+  };
+
+  const handleEditUpload = (e) => {
+    const file = e.target.files[0];
+    const storageRef = ref(storage, `vehiclePhotos/${file.name}`);
+    uploadBytes(storageRef, file).then((snapshot) => {
+      getDownloadURL(snapshot.ref).then((url) => {
+        setCurrentVehicle((prevVehicle) => ({ ...prevVehicle, photoURL: url }));
+      });
+    });
+  };
+
   const handleSaveVehicle = async () => {
     try {
       await addDoc(collection(db, 'vehicles'), newVehicle);
@@ -64,7 +88,8 @@ const VehiclesPage = () => {
       const querySnapshot = await getDocs(collection(db, 'vehicles'));
       const vehicleData = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        repairs: doc.data().repairs || [] // Ensure repairs is an array
       }));
       setVehicles(vehicleData);
     } catch (error) {
@@ -77,14 +102,17 @@ const VehiclesPage = () => {
       const vehicleRef = doc(db, 'vehicles', currentVehicle.id);
       await updateDoc(vehicleRef, {
         ...currentVehicle,
+        repairs: Array.isArray(currentVehicle.repairs) ? currentVehicle.repairs : [currentVehicle.repairs],
         updatedBy: auth.currentUser.email,
         updatedDate: Timestamp.now()
       });
       setIsEditModalOpen(false);
+      setIsMaintenanceModalOpen(false);
       const querySnapshot = await getDocs(collection(db, 'vehicles'));
       const vehicleData = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        repairs: doc.data().repairs || [] // Ensure repairs is an array
       }));
       setVehicles(vehicleData);
     } catch (error) {
@@ -96,7 +124,8 @@ const VehiclesPage = () => {
     return vehicles
       .filter(vehicle => vehicle.status === status)
       .map(vehicle => (
-        <div key={vehicle.id} className="vehicle-card">
+        <div key={vehicle.id} className="vehicle-card" onClick={() => handleVehicleClick(vehicle)}>
+          <img src={vehicle.photoURL} alt={vehicle.name} className="vehicle-thumbnail" />
           <h3>{vehicle.name}</h3>
           {status === 'Rented' && <p>Renter: {vehicle.renter}</p>}
           {status === 'Maintenance' && <p>Notes: {vehicle.notes}</p>}
@@ -107,7 +136,11 @@ const VehiclesPage = () => {
 
   const handleVehicleClick = (vehicle) => {
     setCurrentVehicle(vehicle);
-    setIsEditModalOpen(true);
+    if (vehicle.underMaintenance === 'Yes') {
+      setIsMaintenanceModalOpen(true);
+    } else {
+      setIsEditModalOpen(true);
+    }
   };
 
   return (
@@ -123,6 +156,7 @@ const VehiclesPage = () => {
             .filter(vehicle => vehicle.active === 'Yes' && vehicle.rented === 'No' && vehicle.underMaintenance === 'No')
             .map(vehicle => (
               <div key={vehicle.id} className="vehicle-card" onClick={() => handleVehicleClick(vehicle)}>
+                <img src={vehicle.photoURL} alt={vehicle.name} className="vehicle-thumbnail" />
                 <h3>{vehicle.name}</h3>
               </div>
             ))}
@@ -130,11 +164,31 @@ const VehiclesPage = () => {
       </div>
       <div className="vehicles-section">
         <h2>Repair/Maintenance Vehicles</h2>
-        <div className="vehicle-cards">{renderVehicleCards('Maintenance')}</div>
+        <div className="vehicle-cards">
+          {vehicles
+            .filter(vehicle => vehicle.underMaintenance === 'Yes')
+            .map(vehicle => (
+              <div key={vehicle.id} className="vehicle-card" onClick={() => handleVehicleClick(vehicle)}>
+                <img src={vehicle.photoURL} alt={vehicle.name} className="vehicle-thumbnail" />
+                <h3>{vehicle.name}</h3>
+                <p className="repair-notes">{vehicle.repairs.slice(-1)[0]}</p>
+              </div>
+            ))}
+        </div>
       </div>
       <div className="vehicles-section">
         <h2>Recent Repairs and Issues</h2>
-        <div className="vehicle-cards">{renderVehicleCards('Issue')}</div>
+        <div className="vehicle-cards">
+          {vehicles
+            .filter(vehicle => vehicle.repairs.length > 0)
+            .map(vehicle => (
+              <div key={vehicle.id} className="vehicle-card">
+                <img src={vehicle.photoURL} alt={vehicle.name} className="vehicle-thumbnail" />
+                <h3>{vehicle.name}</h3>
+                <p className="repair-notes">{vehicle.repairs.slice(-1)[0]}</p>
+              </div>
+            ))}
+        </div>
       </div>
       <button className="fab-booking" onClick={() => setIsModalOpen(true)}>
         <i className="fas fa-car"></i>
@@ -149,6 +203,15 @@ const VehiclesPage = () => {
               <button className="close-btn" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <div className="modal-content">
+              <div className="form-group">
+                <label htmlFor="photo">Vehicle Photo</label>
+                <input type="file" id="photo" onChange={handleUpload} />
+                {newVehicle.photoURL && (
+                  <div className="photo-preview">
+                    <img src={newVehicle.photoURL} alt="Vehicle" className="vehicle-thumbnail"/>
+                  </div>
+                )}
+              </div>
               <div className="form-group">
                 <label htmlFor="name">Vehicle Name</label>
                 <input type="text" id="name" name="name" value={newVehicle.name} onChange={handleInputChange} />
@@ -235,6 +298,15 @@ const VehiclesPage = () => {
             </div>
             <div className="modal-content">
               <div className="form-group">
+                <label htmlFor="photo">Vehicle Photo</label>
+                <input type="file" id="photo" onChange={handleEditUpload} />
+                {currentVehicle.photoURL && (
+                  <div className="photo-preview">
+                    <img src={currentVehicle.photoURL} alt="Vehicle" className="vehicle-thumbnail"/>
+                  </div>
+                )}
+              </div>
+              <div className="form-group">
                 <label htmlFor="name">Vehicle Name</label>
                 <input type="text" id="name" name="name" value={currentVehicle.name} onChange={handleEditInputChange} />
               </div>
@@ -318,12 +390,40 @@ const VehiclesPage = () => {
               </div>
               <div className="form-group">
                 <label htmlFor="repairs">Repairs</label>
-                <textarea id="repairs" name="repairs" value={currentVehicle.repairs} onChange={handleEditInputChange} />
+                <textarea id="repairs" name="repairs" value={currentVehicle.repairs.join('\n')} onChange={handleEditInputChange} />
               </div>
             </div>
             <div className="modal-footer">
               <button className="save-btn" onClick={handleUpdateVehicle}>Save Changes</button>
               <button className="cancel-btn" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isMaintenanceModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>Update Maintenance Status</h2>
+              <button className="close-btn" onClick={() => setIsMaintenanceModalOpen(false)}>&times;</button>
+            </div>
+            <div className="modal-content">
+              <div className="form-group">
+                <label htmlFor="underMaintenance">Under Maintenance</label>
+                <select id="underMaintenance" name="underMaintenance" value={currentVehicle.underMaintenance} onChange={handleEditInputChange}>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="repairs">Repairs</label>
+                <textarea id="repairs" name="repairs" value={currentVehicle.repairs.join('\n')} onChange={handleEditInputChange} />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="save-btn" onClick={handleUpdateVehicle}>Save Changes</button>
+              <button className="cancel-btn" onClick={() => setIsMaintenanceModalOpen(false)}>Cancel</button>
             </div>
           </div>
         </div>

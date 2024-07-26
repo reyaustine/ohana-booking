@@ -184,3 +184,30 @@ th, td {
     margin-left: 0;
   }
 }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.pagination button {
+  margin: 0 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  margin: 0 10px;
+}

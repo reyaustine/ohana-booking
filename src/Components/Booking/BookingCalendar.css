@@ -1,5 +1,3 @@
-/* src/Components/Booking/BookingCalendar.css */
-
 .booking-calendar {
     padding: 1rem;
   }
@@ -10,3 +8,8 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
   
+  @media (max-width: 768px) {
+    .rbc-calendar {
+      height: auto; /* Adjust height for mobile responsiveness */
+    }
+  }

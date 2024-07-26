@@ -1,0 +1,189 @@
+/* BookingDetailsModal.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  padding: 20px;
+  max-height: 90%;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.modal-content {
+  padding: 20px 0;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.close-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+/* BookingModal.css */
+/* Ensure this is in your CSS file */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  z-index: 1000; /* Ensure the z-index is high enough */
+}
+
+.modal {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  padding: 20px;
+  max-height: 90%;
+  overflow-y: auto;
+  z-index: 1001; /* Ensure the modal itself is also on top */
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.modal-content {
+  padding: 20px 0;
+}
+
+.tab-content {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.error {
+  color: red;
+  font-size: 0.875em;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.prev-btn,
+.next-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.next-btn {
+  background: #007bff;
+  color: white;
+}
+
+.next-btn.enabled {
+  background: #0056b3;
+}
+
+.prev-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.thumbnail-container {
+  cursor: pointer;
+  display: inline-block;
+}
+
+.thumbnail {
+  width: 100px;
+  height: auto;
+}
+
+.full-image-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1002; /* Ensure the full image overlay is on top */
+}
+
+.full-image-container {
+  position: relative;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  z-index: 1003; /* Ensure the full image container is on top */
+}
+
+.full-image {
+  max-width: 100%;
+  max-height: 80vh;
+}
+
+.full-image-container .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 1.5em;
+  color: #333;
+  cursor: pointer;
+}

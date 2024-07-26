@@ -1,32 +1,58 @@
-// src/Components/Booking/BookingCalendar.js
-
 import React, { useState, useEffect } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase';
 import './BookingCalendar.css';
+import BookingDetailsModal from './BookingDetailsModal';
+import BookingModal from '../Booking/BookingModal';
 
 const localizer = momentLocalizer(moment);
 
-const BookingCalendar = () => {
+const BookingCalendar = ({ currentUser }) => {
   const [events, setEvents] = useState([]);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
-    // Fetch booked days from an API or static data
-    const bookedDays = [
-      {
-        title: 'Booked',
-        start: new Date(2024, 6, 20),
-        end: new Date(2024, 6, 20),
-      },
-      {
-        title: 'Booked',
-        start: new Date(2024, 6, 22),
-        end: new Date(2024, 6, 23),
-      },
-    ];
-    setEvents(bookedDays);
+    const fetchBookedDays = async () => {
+      const querySnapshot = await getDocs(collection(db, 'bookings'));
+      const bookedDays = querySnapshot.docs.map(doc => {
+        const booking = doc.data();
+        return {
+          id: doc.id,
+          title: `${booking.renterDetails.name} - ${booking.bookingDetails.vehicle}`,
+          start: new Date(booking.bookingDetails.rentDate),
+          end: new Date(booking.bookingDetails.returnDate),
+          bookingData: booking // Store booking data here
+        };
+      });
+      setEvents(bookedDays);
+    };
+
+    fetchBookedDays();
   }, []);
+
+  const handleSelectEvent = (event) => {
+    const booking = events.find(booking => booking.id === event.id);
+    setSelectedBooking(booking);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedBooking(null);
+  };
+
+  const handleDoubleClickSlot = (slotInfo) => {
+    setSelectedDate(slotInfo.start);
+    setIsBookingModalOpen(true);
+  };
+
+  const handleBookingModalClose = () => {
+    setIsBookingModalOpen(false);
+    setSelectedDate(null);
+  };
 
   return (
     <div className="booking-calendar">
@@ -35,9 +61,24 @@ const BookingCalendar = () => {
         events={events}
         startAccessor="start"
         endAccessor="end"
-        style={{ height: 500 }}
+        style={{ height: '900px' }}
         views={['month', 'week', 'day']}
         defaultView="month"
+        onSelectEvent={handleSelectEvent}
+        onDoubleClickEvent={handleDoubleClickSlot}
+      />
+      {selectedBooking && (
+        <BookingDetailsModal
+          isOpen={!!selectedBooking}
+          onClose={handleCloseModal}
+          booking={selectedBooking.bookingData} // Pass booking data to the modal
+        />
+      )}
+      <BookingModal
+        isOpen={isBookingModalOpen}
+        onClose={handleBookingModalClose}
+        currentUser={currentUser}
+        selectedDate={selectedDate}
       />
     </div>
   );
