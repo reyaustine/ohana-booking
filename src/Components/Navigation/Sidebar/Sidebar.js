@@ -16,7 +16,7 @@ const Sidebar = ({ sidebarOpen, toggleSidebar }) => {
   };
 
   return (
-    <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+    <aside className={`sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
       <div className="sidebar-header">
         <img src="/7.png" alt="Logo" className="logo" />
         <h1>Ohana CarRental</h1>
