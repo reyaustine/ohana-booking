@@ -1,57 +1,73 @@
-// src/Components/Navigation/Sidebar/Sidebar.js
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../../Contexts/AuthContext';
 import './Sidebar.css';
 
-const Sidebar = ({ sidebarCollapsed, toggleSidebar }) => {
+const Sidebar = ({ sidebarOpen, toggleSidebar }) => {
+  const { logout } = useAuth();
+  const location = useLocation();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Failed to logout", error);
+    }
+  };
+
   return (
-    <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+    <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
-        {!sidebarCollapsed && <h1>CarRent Admin</h1>}
+        <img src="/7.png" alt="Logo" className="logo" />
+        <h1>Ohana CarRental</h1>
         <button onClick={toggleSidebar} className="toggle-btn">
-          {sidebarCollapsed ? '→' : '←'}
+          {sidebarOpen ? '←' : '→'}
         </button>
       </div>
       <nav>
         <ul>
           <li>
-            <Link to="/" className="active">
+            <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
               <i className="fas fa-tachometer-alt"></i>
-              {!sidebarCollapsed && <span>Dashboard</span>}
+              <span>Dashboard</span>
             </Link>
           </li>
           <li>
-            <Link to="bookings">
+            <Link to="/bookings" className={location.pathname === '/bookings' ? 'active' : ''}>
               <i className="fas fa-calendar-alt"></i>
-              {!sidebarCollapsed && <span>Bookings</span>}
+              <span>Bookings</span>
             </Link>
           </li>
           <li>
-            <Link to="vehicles">
+            <Link to="/vehicles" className={location.pathname === '/vehicles' ? 'active' : ''}>
               <i className="fas fa-car"></i>
-              {!sidebarCollapsed && <span>Vehicles</span>}
+              <span>Vehicles</span>
             </Link>
           </li>
           <li>
-            <Link to="customers">
+            <Link to="/customers" className={location.pathname === '/customers' ? 'active' : ''}>
               <i className="fas fa-users"></i>
-              {!sidebarCollapsed && <span>Customers</span>}
+              <span>Customers</span>
             </Link>
           </li>
           <li>
-            <Link to="#">
+            <Link to="/reports" className={location.pathname === '/reports' ? 'active' : ''}>
               <i className="fas fa-chart-bar"></i>
-              {!sidebarCollapsed && <span>Reports</span>}
+              <span>Reports</span>
             </Link>
           </li>
           <li>
-            <Link to="settings">
+            <Link to="/settings" className={location.pathname === '/settings' ? 'active' : ''}>
               <i className="fas fa-cog"></i>
-              {!sidebarCollapsed && <span>Settings</span>}
+              <span>Settings</span>
             </Link>
           </li>
         </ul>
       </nav>
+      <button className="logout-btn" onClick={handleLogout}>
+        <i className="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+      </button>
     </aside>
   );
 };

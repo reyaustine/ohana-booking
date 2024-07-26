@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import './BookingModal.css';
 
@@ -41,19 +41,48 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
     generateBookingID();
   }, []);
 
+  const validateRenterDetails = useCallback(() => {
+    const newErrors = {};
+    if (!renterDetails.name) newErrors.name = 'Name is required';
+    if (!renterDetails.mobile) newErrors.mobile = 'Mobile number is required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [renterDetails]);
+
+  const validateBookingDetails = useCallback(() => {
+    const newErrors = {};
+    if (!bookingDetails.vehicle) newErrors.vehicle = 'Vehicle is required';
+    if (!bookingDetails.rentDate) newErrors.rentDate = 'Rent Date is required';
+    if (!bookingDetails.rentTime) newErrors.rentTime = 'Rent Time is required';
+    if (!bookingDetails.rentDuration || bookingDetails.rentDuration < 1) newErrors.rentDuration = 'Minimum duration is 1 hour';
+    if (!bookingDetails.totalFee) newErrors.totalFee = 'Total Fee is required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [bookingDetails]);
+
   useEffect(() => {
     if (currentTab === 1) {
       setIsNextEnabled(validateRenterDetails());
     } else if (currentTab === 2) {
       setIsNextEnabled(validateBookingDetails());
     }
-  }, [renterDetails, bookingDetails, currentTab]);
+  }, [renterDetails, bookingDetails, currentTab, validateRenterDetails, validateBookingDetails]);
+
+  const calculateReturnDate = useCallback(() => {
+    try {
+      const rentDateTime = new Date(`${bookingDetails.rentDate}T${bookingDetails.rentTime}`);
+      const returnDateTime = new Date(rentDateTime.getTime() + bookingDetails.rentDuration * 60 * 60 * 1000);
+      setBookingDetails(prevDetails => ({ ...prevDetails, returnDate: returnDateTime.toISOString() }));
+    } catch (error) {
+      console.error("Error calculating return date: ", error);
+    }
+  }, [bookingDetails.rentDate, bookingDetails.rentTime, bookingDetails.rentDuration]);
 
   useEffect(() => {
     if (bookingDetails.rentDate && bookingDetails.rentTime && bookingDetails.rentDuration) {
       calculateReturnDate();
     }
-  }, [bookingDetails.rentDate, bookingDetails.rentTime, bookingDetails.rentDuration]);
+  }, [bookingDetails.rentDate, bookingDetails.rentTime, bookingDetails.rentDuration, calculateReturnDate]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -70,35 +99,6 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
     const querySnapshot = await getDocs(collection(db, 'bookings'));
     const bookingCount = querySnapshot.size + 1;
     setBookingID(`BOOKINGID#${String(bookingCount).padStart(4, '0')}`);
-  };
-
-  const calculateReturnDate = () => {
-    try {
-      const rentDateTime = new Date(`${bookingDetails.rentDate}T${bookingDetails.rentTime}`);
-      const returnDateTime = new Date(rentDateTime.getTime() + bookingDetails.rentDuration * 60 * 60 * 1000);
-      setBookingDetails({ ...bookingDetails, returnDate: returnDateTime.toISOString() });
-    } catch (error) {
-      console.error("Error calculating return date: ", error);
-    }
-  };
-
-  const validateRenterDetails = () => {
-    const newErrors = {};
-    if (!renterDetails.name) newErrors.name = 'Name is required';
-    if (!renterDetails.mobile) newErrors.mobile = 'Mobile number is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateBookingDetails = () => {
-    const newErrors = {};
-    if (!bookingDetails.vehicle) newErrors.vehicle = 'Vehicle is required';
-    if (!bookingDetails.rentDate) newErrors.rentDate = 'Rent Date is required';
-    if (!bookingDetails.rentTime) newErrors.rentTime = 'Rent Time is required';
-    if (!bookingDetails.rentDuration || bookingDetails.rentDuration < 1) newErrors.rentDuration = 'Minimum duration is 1 hour';
-    if (!bookingDetails.totalFee) newErrors.totalFee = 'Total Fee is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
@@ -125,8 +125,8 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
           rentDate: `${bookingDetails.rentDate} ${bookingDetails.rentTime}`,
           returnDate: bookingDetails.returnDate
         },
-        createdAt: Timestamp.now(),
-        savedBy: currentUser || 'Unknown', // Ensure savedBy is not undefined
+        createdAt: new Date(),
+        savedBy: currentUser || 'Unknown',
         updatedBy: 'N/A',
         updatedDate: 'N/A',
         active: 'Yes',
@@ -134,7 +134,7 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
         uploadFile
       });
       alert('Booking completed successfully!');
-      // Reset fields
+      // Reset all fields
       setRenterDetails({ name: '', mobile: '' });
       setBookingDetails({
         vehicle: '',
@@ -150,6 +150,9 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
       setIsNextEnabled(false);
       setCurrentTab(1);
       setBookingID('');
+      setUploadFile(null);
+      setPaymentProof(null);
+      generateBookingID(); // Generate a new booking ID for the next booking
       onClose();
     } catch (error) {
       console.error('Error saving booking: ', error);
@@ -174,7 +177,7 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
       <div className="modal">
         <div className="modal-header">
           <h2>{currentTab === 1 ? 'Renter Details Info' : currentTab === 2 ? 'Booking Details' : 'Booking Recap'}</h2>
-          <button className="close-btn" onClick={onClose}>&times;</button>
+          <button className="close-btn-booking" onClick={onClose}>X</button>
         </div>
         <div className="modal-content">
           {currentTab === 1 && (
@@ -208,14 +211,6 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
                   </div>
                 )}
               </div>
-              {isFullImageVisible && (
-                <div className="full-image-overlay" onClick={() => setIsFullImageVisible(false)}>
-                  <div className="full-image-container">
-                    <button className="close-btn" onClick={() => setIsFullImageVisible(false)}>&times;</button>
-                    <img src={uploadFile} alt="Full Uploaded ID" className="full-image" />
-                  </div>
-                </div>
-              )}
             </div>
           )}
           {currentTab === 2 && (
@@ -355,6 +350,14 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
           </button>
         </div>
       </div>
+      {isFullImageVisible && (
+        <div className="full-image-overlay" onClick={() => setIsFullImageVisible(false)}>
+          <div className="full-image-container">
+            <button className="close-btn" onClick={() => setIsFullImageVisible(false)}>&times;</button>
+            <img src={uploadFile || paymentProof} alt="Full size" className="full-image" />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

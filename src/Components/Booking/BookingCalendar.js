@@ -21,9 +21,11 @@ const BookingCalendar = ({ currentUser }) => {
       const querySnapshot = await getDocs(collection(db, 'bookings'));
       const bookedDays = querySnapshot.docs.map(doc => {
         const booking = doc.data();
+        const rentTime = moment(booking.bookingDetails.rentDate).format('HH:mm');
+        const returnTime = moment(booking.bookingDetails.returnDate).format('HH:mm');
         return {
           id: doc.id,
-          title: `${booking.renterDetails.name} - ${booking.bookingDetails.vehicle}`,
+          title: `Time: ${rentTime} | Return: ${returnTime} ${booking.renterDetails.name} ${booking.bookingDetails.vehicle}`,
           start: new Date(booking.bookingDetails.rentDate),
           end: new Date(booking.bookingDetails.returnDate),
           bookingData: booking // Store booking data here
@@ -61,11 +63,22 @@ const BookingCalendar = ({ currentUser }) => {
         events={events}
         startAccessor="start"
         endAccessor="end"
-        style={{ height: '900px' }}
+        style={{ height: '700px' }}
         views={['month', 'week', 'day']}
         defaultView="month"
         onSelectEvent={handleSelectEvent}
         onDoubleClickEvent={handleDoubleClickSlot}
+        eventPropGetter={(event) => ({
+          style: {
+            backgroundColor: '#3174ad',
+            color: 'white',
+            border: 'none',
+            borderRadius: '3px',
+            fontSize: '0.8em',
+            padding: '2px 5px',
+          },
+        })}
+        firstDay={1}  // Start the week on Monday
       />
       {selectedBooking && (
         <BookingDetailsModal

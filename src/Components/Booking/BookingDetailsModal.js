@@ -17,12 +17,14 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
           <p><strong>Renter Name:</strong> {renterDetails.name}</p>
           <p><strong>Vehicle:</strong> {bookingDetails.vehicle}</p>
           <p><strong>Rent Date:</strong> {new Date(bookingDetails.rentDate).toLocaleString()}</p>
-          <p><strong>Hours:</strong> {bookingDetails.hours}</p>
-          <p><strong>Location:</strong> {bookingDetails.location}</p>
-          <p><strong>Payment:</strong> {bookingDetails.payment}</p>
-          <p><strong>Mode of Payment:</strong> {bookingDetails.modeOfPayment}</p>
-          <p><strong>Total Fee:</strong> {bookingDetails.totalFee}</p>
+          <p><strong>Rent Duration:</strong> {bookingDetails.rentDuration} hours</p>
+          <p><strong>Payment:</strong> {bookingDetails.totalFee}</p>
+          <p><strong>Mode of Payment:</strong> {bookingDetails.payment}</p>
           <p><strong>Return Date:</strong> {new Date(bookingDetails.returnDate).toLocaleString()}</p>
+          <div>
+            <strong>Notes:</strong>
+            <pre>{bookingDetails.notes}</pre>
+          </div>
         </div>
         <div className="modal-footer">
           <button className="close-btn" onClick={onClose}>Close</button>
