@@ -162,22 +162,29 @@
   }
 
   .top-bar {
-    padding-left: 60px;
+    padding-left: 75px;
+  }
+
+  .top-bar .user-email{
+    font-size: 9.5px;
   }
 
   .toggle-btn {
+    display: none;
+  }
+  .sidebar .toggle-btn{
     display: none;
   }
 
   .menu-toggle {
     display: block;
     position: absolute;
-    left: 10px;
-    top: 1.5rem;
+    left: 0.3rem;
+    top: 2rem;
     z-index: 1001;
     background: white;
     border: none;
-    font-size: 2.5rem;
+    font-size: 1.5rem;
     color: #ec4848;
   }
 }
