@@ -16,26 +16,30 @@ const BookingCalendar = ({ currentUser }) => {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
 
-  useEffect(() => {
-    const fetchBookedDays = async () => {
-      const querySnapshot = await getDocs(collection(db, 'bookings'));
-      const bookedDays = querySnapshot.docs.map(doc => {
-        const booking = doc.data();
-        const rentTime = moment(booking.bookingDetails.rentDate).format('HH:mm');
-        const returnTime = moment(booking.bookingDetails.returnDate).format('HH:mm');
-        return {
-          id: doc.id,
-          title: `Time: ${rentTime} | Return: ${returnTime} ${booking.renterDetails.name} ${booking.bookingDetails.vehicle}`,
-          start: new Date(booking.bookingDetails.rentDate),
-          end: new Date(booking.bookingDetails.returnDate),
-          bookingData: booking // Store booking data here
-        };
-      });
-      setEvents(bookedDays);
-    };
+  const fetchBookedDays = async () => {
+    const querySnapshot = await getDocs(collection(db, 'bookings'));
+    const bookedDays = querySnapshot.docs.map(doc => {
+      const booking = doc.data();
+      const rentTime = moment(booking.bookingDetails.rentDate).format('HH:mm');
+      const returnTime = moment(booking.bookingDetails.returnDate).format('HH:mm');
+      return {
+        id: doc.id,
+        title: `Time: ${rentTime} | Return: ${returnTime} ${booking.renterDetails.name} ${booking.bookingDetails.vehicle}`,
+        start: new Date(booking.bookingDetails.rentDate),
+        end: new Date(booking.bookingDetails.returnDate),
+        bookingData: booking // Store booking data here
+      };
+    });
+    setEvents(bookedDays);
+  };
 
+  useEffect(() => {
     fetchBookedDays();
   }, []);
+
+  const refreshBookings = () => {
+    fetchBookedDays();
+  };
 
   const handleSelectEvent = (event) => {
     const booking = events.find(booking => booking.id === event.id);
@@ -56,6 +60,21 @@ const BookingCalendar = ({ currentUser }) => {
     setSelectedDate(null);
   };
 
+  const eventPropGetter = (event) => {
+    const isPastEvent = moment(event.end).isBefore(moment());
+    const backgroundColor = isPastEvent ? '#d9534f' : '#3174ad'; // Red for past events, blue for upcoming and current events
+    return {
+      style: {
+        backgroundColor,
+        color: 'white',
+        border: 'none',
+        borderRadius: '3px',
+        fontSize: '0.8em',
+        padding: '2px 5px',
+      },
+    };
+  };
+
   return (
     <div className="booking-calendar">
       <Calendar
@@ -68,16 +87,7 @@ const BookingCalendar = ({ currentUser }) => {
         defaultView="month"
         onSelectEvent={handleSelectEvent}
         onDoubleClickEvent={handleDoubleClickSlot}
-        eventPropGetter={(event) => ({
-          style: {
-            backgroundColor: '#3174ad',
-            color: 'white',
-            border: 'none',
-            borderRadius: '3px',
-            fontSize: '0.8em',
-            padding: '2px 5px',
-          },
-        })}
+        eventPropGetter={eventPropGetter}
         firstDay={1}  // Start the week on Monday
       />
       {selectedBooking && (
@@ -85,6 +95,8 @@ const BookingCalendar = ({ currentUser }) => {
           isOpen={!!selectedBooking}
           onClose={handleCloseModal}
           booking={selectedBooking.bookingData} // Pass booking data to the modal
+          refreshBookings={refreshBookings}
+          currentUser={currentUser}
         />
       )}
       <BookingModal

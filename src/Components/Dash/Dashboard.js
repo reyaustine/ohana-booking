@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import './Dashboard.css';
 import Sidebar from '../Navigation/Sidebar/Sidebar';
 import BookingModal from '../Booking/BookingModal';
+import BookingDetailsModal from '../Booking/BookingDetailsModal';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import NoteList from './NoteList';
@@ -42,7 +43,11 @@ const Dashboard = () => {
   const [pageTitle, setPageTitle] = useState('Dashboard');
   const itemsPerPage = 5;
   const location = useLocation();
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isBookingDetailsModalOpen, setIsBookingDetailsModalOpen] = useState(false);
+  
   const fetchUserAvatars = async () => {
     const usersSnapshot = await getDocs(collection(db, 'users'));
     const avatars = {};
@@ -140,6 +145,48 @@ const Dashboard = () => {
     setBookingModalDate(null);
   };
 
+  const sortBookings = (bookings, sortConfig) => {
+    if (!sortConfig.key) return bookings;
+    
+    return [...bookings].sort((a, b) => {
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+  
+      // Handle nested properties
+      if (sortConfig.key.includes('.')) {
+        const keys = sortConfig.key.split('.');
+        aValue = keys.reduce((obj, key) => obj[key], a);
+        bValue = keys.reduce((obj, key) => obj[key], b);
+      }
+  
+      if (aValue < bValue) {
+        return sortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+  
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const handleBookingClick = (booking) => {
+    setSelectedBooking(booking);
+    setIsBookingDetailsModalOpen(true);
+  };
+
+  const closeBookingDetailsModal = () => {
+    setIsBookingDetailsModalOpen(false);
+    setSelectedBooking(null);
+  };
+
   return (
     <div className="dashboard">
       <Sidebar sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
@@ -188,18 +235,18 @@ const Dashboard = () => {
                 <table>
                   <thead>
                     <tr>
-                      <th>Booking ID</th>
-                      <th>Customer</th>
-                      <th>Vehicle</th>
-                      <th>Rent Date & Time</th>
-                      <th>Return Date & Time</th>
-                      <th>Status</th>
+                      <th onClick={() => requestSort('bookingID')}>Booking ID</th>
+                      <th onClick={() => requestSort('renterDetails.name')}>Customer</th>
+                      <th onClick={() => requestSort('bookingDetails.vehicle')}>Vehicle</th>
+                      <th onClick={() => requestSort('bookingDetails.rentDate')}>Rent Date & Time</th>
+                      <th onClick={() => requestSort('bookingDetails.returnDate')}>Return Date & Time</th>
+                      <th onClick={() => requestSort('status')}>Status</th>
                       <th>Booked by</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recentBookings.map((booking) => (
-                      <tr key={booking.bookingID}>
+                    {sortBookings(recentBookings, sortConfig).map((booking) => (
+                      <tr key={booking.bookingID} onClick={() => handleBookingClick(booking)}>
                         <td>{booking.bookingID}</td>
                         <td>{booking.renterDetails.name}</td>
                         <td>{booking.bookingDetails.vehicle}</td>
@@ -246,6 +293,13 @@ const Dashboard = () => {
         onClose={closeBookingModal}
         currentUser={user}
         selectedDate={bookingModalDate}
+        refreshBookings={() => fetchDashboardData(currentPage)}
+      />
+
+      <BookingDetailsModal
+        isOpen={isBookingDetailsModalOpen}
+        onClose={closeBookingDetailsModal}
+        booking={selectedBooking}
         refreshBookings={() => fetchDashboardData(currentPage)}
       />
     </div>

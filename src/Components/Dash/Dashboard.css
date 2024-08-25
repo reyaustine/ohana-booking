@@ -230,6 +230,14 @@ th, td {
     width: 250px;
   }
 
+  .recent-bookings th {
+    cursor: pointer;
+  }
+  
+  .recent-bookings th:hover {
+    background-color: #f0f0f0;
+  }
+
   .sidebar.open {
     left: 0;
   }

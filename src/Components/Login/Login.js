@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Contexts/AuthContext';
 import './Login.css';
+import carImage from '../../5.png'; 
+import carImage2 from '../../3.png'; 
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,7 +18,7 @@ const Login = () => {
     try {
       await login(email, password);
       console.log('User signed in successfully');
-      navigate('/'); // Redirect to dashboard after successful login
+      navigate('/');
     } catch (error) {
       setError(error.message);
       console.error("Error logging in:", error);
@@ -24,26 +26,34 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Login</button>
-      </form>
-      {error && <p className="error">{error}</p>}
+    <div className="login-page">
+      <div className="login-container">
+        <div className="car-image-container">
+        <img src={carImage} alt="Rental Car" className="car-image" />
+        </div>
+        <div className="login-form">
+          <h1>Ohana</h1>
+          <p>Cebu Car Rental</p>
+          <form onSubmit={handleLogin}>
+            <input
+              type="email"
+              placeholder="E-mail Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button type="submit">LOG IN</button>
+          </form>
+          {error && <p className="error">{error}</p>}
+        </div>
+      </div>
     </div>
   );
 };

@@ -184,3 +184,10 @@
 .modal-footer .close-btn:hover {
   background-color: #5a6268;
 }
+
+.modal-footer-info {
+  text-align: center;
+  margin-top: 10px;
+  color: gray;
+  font-size: 0.9em;
+}
