@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { db } from '../../firebase';
@@ -23,8 +24,6 @@ const BookingUpdateModal = ({ isOpen, onClose, booking, refreshBookings }) => {
           id: doc.id,
           ...doc.data()
         }));
-
-        // Filter out vehicles that should not be displayed (like a placeholder)
         const filteredVehicles = vehicleData.filter(vehicle => vehicle.name !== 'Select a vehicle');
         setVehicles(filteredVehicles);
       } catch (error) {
@@ -45,7 +44,7 @@ const BookingUpdateModal = ({ isOpen, onClose, booking, refreshBookings }) => {
   const calculateRentDuration = (rentDate, returnDate) => {
     const rentDateTime = new Date(rentDate);
     const returnDateTime = new Date(returnDate);
-    return (returnDateTime - rentDateTime) / (60 * 60 * 1000); // Convert milliseconds to hours
+    return (returnDateTime - rentDateTime) / (60 * 60 * 1000);
   };
 
   const handleRentDateChange = (date) => {
@@ -78,6 +77,9 @@ const BookingUpdateModal = ({ isOpen, onClose, booking, refreshBookings }) => {
 
   const handleUpdate = async () => {
     const bookingRef = doc(db, 'bookings', booking.bookingID);
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    const updatedBy = currentUser ? currentUser.email : 'Unknown';
 
     await updateDoc(bookingRef, {
       'bookingDetails.vehicle': updatedBookingDetails.vehicle,
@@ -87,6 +89,8 @@ const BookingUpdateModal = ({ isOpen, onClose, booking, refreshBookings }) => {
       'bookingDetails.notes': updatedBookingDetails.notes,
       'bookingDetails.totalFee': updatedBookingDetails.totalFee,
       'bookingDetails.returnDate': updatedBookingDetails.returnDate,
+      'updatedBy': updatedBy,
+      'updatedDate': new Date().toISOString(),
     });
 
     onClose();
@@ -156,7 +160,7 @@ const BookingUpdateModal = ({ isOpen, onClose, booking, refreshBookings }) => {
               type="number"
               name="totalFee"
               value={updatedBookingDetails.totalFee}
-              onChange={(e) => setUpdatedBookingDetails({ ...updatedBookingDetails, totalFee: e.target.value })}
+              onChange={(e) => setUpdatedBookingDetails({ ...updatedBookingDetails, totalFee: parseFloat(e.target.value) })}
             />
           </label>
           <label>

@@ -4,9 +4,9 @@ import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
-import './BookingCalendar.css';
 import BookingDetailsModal from './BookingDetailsModal';
 import BookingModal from '../Booking/BookingModal';
+import './BookingCalendar.css'; // We will convert this to Tailwind.
 
 const localizer = momentLocalizer(moment);
 
@@ -18,18 +18,27 @@ const BookingCalendar = ({ currentUser }) => {
 
   const fetchBookedDays = async () => {
     const querySnapshot = await getDocs(collection(db, 'bookings'));
-    const bookedDays = querySnapshot.docs.map(doc => {
-      const booking = doc.data();
-      const rentTime = moment(booking.bookingDetails.rentDate).format('HH:mm');
-      const returnTime = moment(booking.bookingDetails.returnDate).format('HH:mm');
-      return {
-        id: doc.id,
-        title: `Time: ${rentTime} | Return: ${returnTime} ${booking.renterDetails.name} ${booking.bookingDetails.vehicle}`,
-        start: new Date(booking.bookingDetails.rentDate),
-        end: new Date(booking.bookingDetails.returnDate),
-        bookingData: booking // Store booking data here
-      };
-    });
+    const bookedDays = querySnapshot.docs
+      .map(doc => {
+        const booking = doc.data();
+
+        // Check if the booking is active (ignore if 'active' is NO, No, or no)
+        if (booking.active && ['NO', 'No', 'no'].includes(booking.active)) {
+          return null; // Exclude the booking if it's not active
+        }
+
+        const rentTime = moment(booking.bookingDetails.rentDate).format('HH:mm');
+        const returnTime = moment(booking.bookingDetails.returnDate).format('HH:mm');
+        return {
+          id: doc.id,
+          title: `${booking.bookingDetails.vehicle} - ${rentTime} | ${returnTime}`,
+          start: new Date(booking.bookingDetails.rentDate),
+          end: new Date(booking.bookingDetails.returnDate),
+          bookingData: booking // Store booking data here
+        };
+      })
+      .filter(booking => booking !== null); // Filter out null (inactive) bookings
+
     setEvents(bookedDays);
   };
 
@@ -62,39 +71,45 @@ const BookingCalendar = ({ currentUser }) => {
 
   const eventPropGetter = (event) => {
     const isPastEvent = moment(event.end).isBefore(moment());
-    const backgroundColor = isPastEvent ? '#d9534f' : '#3174ad'; // Red for past events, blue for upcoming and current events
+    const backgroundColor = isPastEvent ? '#F87171' : '#3B82F6'; // Red for past events, blue for upcoming
     return {
       style: {
         backgroundColor,
         color: 'white',
         border: 'none',
-        borderRadius: '3px',
-        fontSize: '0.8em',
-        padding: '2px 5px',
+        borderRadius: '0.375rem',
+        padding: '0.5rem',
+        fontSize: '0.875rem',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        whiteSpace: 'normal', // Allow wrapping of event titles
+        textOverflow: 'clip', // Prevent text clipping
+        overflow: 'visible',  // Make sure text flows outside the container if needed
+        wordWrap: 'break-word', // Ensure long titles wrap to the next line
       },
     };
   };
 
   return (
-    <div className="booking-calendar">
+    <div className="p-4 max-w-full">
       <Calendar
         localizer={localizer}
         events={events}
         startAccessor="start"
         endAccessor="end"
-        style={{ height: '700px' }}
+        style={{ height: '700px', borderRadius: '0.75rem', maxWidth: '100%' }} // Tailwind 'rounded-lg'
         views={['month', 'week', 'day']}
         defaultView="month"
         onSelectEvent={handleSelectEvent}
         onDoubleClickEvent={handleDoubleClickSlot}
         eventPropGetter={eventPropGetter}
         firstDay={1}  // Start the week on Monday
+        popup={true} // Enable popup when there are too many events
       />
       {selectedBooking && (
         <BookingDetailsModal
           isOpen={!!selectedBooking}
           onClose={handleCloseModal}
-          booking={selectedBooking.bookingData} // Pass booking data to the modal
+          booking={selectedBooking.bookingData}
           refreshBookings={refreshBookings}
           currentUser={currentUser}
         />

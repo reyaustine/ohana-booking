@@ -10,7 +10,10 @@ const NoteList = () => {
   useEffect(() => {
     const fetchNotes = async () => {
       const notesSnapshot = await getDocs(collection(db, 'notes'));
-      const notesData = notesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const notesData = notesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setNotes(notesData);
     };
 
@@ -19,8 +22,9 @@ const NoteList = () => {
 
   const addNote = async () => {
     if (newNote.trim() === '') return;
-    const docRef = await addDoc(collection(db, 'notes'), { text: newNote });
-    setNotes([...notes, { id: docRef.id, text: newNote }]);
+    const currentDate = new Date();
+    const docRef = await addDoc(collection(db, 'notes'), { text: newNote, date: currentDate });
+    setNotes([...notes, { id: docRef.id, text: newNote, date: currentDate }]);
     setNewNote('');
   };
 
@@ -35,7 +39,10 @@ const NoteList = () => {
       <ul>
         {notes.map(note => (
           <li key={note.id}>
-            {note.text}
+            <div>
+              <p>{note.text}</p>
+              <small>{new Date(note.date?.seconds * 1000).toLocaleString()}</small>
+            </div>
             <button onClick={() => deleteNote(note.id)}>Delete</button>
           </li>
         ))}

@@ -36,6 +36,7 @@ const Dashboard = () => {
   const [todaysBookings, setTodaysBookings] = useState(0);
   const [availableCars, setAvailableCars] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [allBookings, setAllBookings] = useState([]);
   const [recentBookings, setRecentBookings] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -43,11 +44,10 @@ const Dashboard = () => {
   const [pageTitle, setPageTitle] = useState('Dashboard');
   const itemsPerPage = 5;
   const location = useLocation();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [sortConfig, setSortConfig] = useState({ key: 'bookingID', direction: 'descending' });
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isBookingDetailsModalOpen, setIsBookingDetailsModalOpen] = useState(false);
-  
+
   const fetchUserAvatars = async () => {
     const usersSnapshot = await getDocs(collection(db, 'users'));
     const avatars = {};
@@ -58,77 +58,105 @@ const Dashboard = () => {
     setUserAvatars(avatars);
   };
 
-  const fetchDashboardData = async (page) => {
-    // Fetch all bookings
+  const fetchDashboardData = async () => {
     const bookingsSnapshot = await getDocs(collection(db, 'bookings'));
-    const bookings = bookingsSnapshot.docs.map((doc) => doc.data());
+    const bookings = bookingsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-    // Filter Today's Bookings
+    // Filter out inactive bookings
+    const activeBookings = bookings.filter(booking => booking.active !== 'NO');
+
+    setAllBookings(activeBookings);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todaysBookingsCount = bookings.filter((booking) => {
+    const todaysBookingsCount = activeBookings.filter((booking) => {
       const rentDate = new Date(booking.bookingDetails.rentDate);
       return rentDate >= today && rentDate < new Date(today.getTime() + 24 * 60 * 60 * 1000);
     }).length;
     setTodaysBookings(todaysBookingsCount);
 
-    // Calculate Available Cars
     const vehiclesSnapshot = await getDocs(collection(db, 'vehicles'));
     const vehicleNames = vehiclesSnapshot.docs.map((doc) => doc.data().name);
-    const bookedCarsCount = bookings.filter((booking) => {
+    const bookedCarsCount = activeBookings.filter((booking) => {
       const rentDate = new Date(booking.bookingDetails.rentDate);
       const returnDate = new Date(booking.bookingDetails.returnDate);
       return rentDate < new Date(today.getTime() + 24 * 60 * 60 * 1000) && returnDate >= today;
     }).length;
     setAvailableCars(vehicleNames.length - bookedCarsCount);
 
-    // Calculate Total Revenue
-    const totalRevenueSum = bookings.reduce((sum, booking) => {
+    const totalRevenueSum = activeBookings.reduce((sum, booking) => {
       return sum + parseFloat(booking.bookingDetails.totalFee || 0);
     }, 0);
     setTotalRevenue(totalRevenueSum);
 
-    // Get Recent Bookings
-    const recentBookingsData = bookings
-      .sort((a, b) => new Date(b.bookingDetails.rentDate) - new Date(a.bookingDetails.rentDate))
-      .map((booking) => ({
-        ...booking,
-        status: 'Confirmed',
-        rentDateTime: new Date(booking.bookingDetails.rentDate).toLocaleString(),
-        returnDateTime: new Date(booking.bookingDetails.returnDate).toLocaleString(),
-      }));
-    setTotalPages(Math.ceil(recentBookingsData.length / itemsPerPage));
-    const startIndex = (page - 1) * itemsPerPage;
-    setRecentBookings(recentBookingsData.slice(startIndex, startIndex + itemsPerPage));
+    applySortingAndPagination(activeBookings);
+  };
+
+  const applySortingAndPagination = (bookings) => {
+    const sortedBookings = [...bookings].sort((a, b) => {
+      const aValue = getNestedValue(a, sortConfig.key);
+      const bValue = getNestedValue(b, sortConfig.key);
+      if (aValue < bValue) {
+        return sortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+
+    setTotalPages(Math.ceil(sortedBookings.length / itemsPerPage));
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedBookings = sortedBookings.slice(startIndex, startIndex + itemsPerPage);
+
+    const formattedBookings = paginatedBookings.map((booking) => ({
+      ...booking,
+      rentDateTime: new Date(booking.bookingDetails.rentDate).toLocaleString(),
+      returnDateTime: new Date(booking.bookingDetails.returnDate).toLocaleString(),
+    }));
+
+    setRecentBookings(formattedBookings);
+  };
+
+  const getNestedValue = (obj, path) => {
+    return path.split('.').reduce((value, key) => value[key], obj);
   };
 
   useEffect(() => {
     fetchUserAvatars();
-    fetchDashboardData(currentPage);
-  }, [currentPage]);
+    fetchDashboardData();
+  }, []);
 
   useEffect(() => {
-    fetchDashboardData(1);
-  }, [location]);
+    applySortingAndPagination(allBookings);
+  }, [currentPage, sortConfig]);
 
   useEffect(() => {
     setPageTitle(getPageTitle(location.pathname));
   }, [location.pathname]);
 
-  useEffect(() => {
-    // Reset top bar data when a new user is logged in
-    if (user) {
-      setUserAvatars({});
-      fetchUserAvatars();
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
     }
-  }, [user]);
+    setSortConfig({ key, direction });
+  };
 
   const handleNextPage = () => {
-    setCurrentPage(currentPage + 1);
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
   };
 
   const handlePreviousPage = () => {
-    setCurrentPage(currentPage - 1);
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
   };
 
   const toggleSidebar = () => {
@@ -143,38 +171,6 @@ const Dashboard = () => {
   const closeBookingModal = () => {
     setIsBookingModalOpen(false);
     setBookingModalDate(null);
-  };
-
-  const sortBookings = (bookings, sortConfig) => {
-    if (!sortConfig.key) return bookings;
-    
-    return [...bookings].sort((a, b) => {
-      let aValue = a[sortConfig.key];
-      let bValue = b[sortConfig.key];
-  
-      // Handle nested properties
-      if (sortConfig.key.includes('.')) {
-        const keys = sortConfig.key.split('.');
-        aValue = keys.reduce((obj, key) => obj[key], a);
-        bValue = keys.reduce((obj, key) => obj[key], b);
-      }
-  
-      if (aValue < bValue) {
-        return sortConfig.direction === 'ascending' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortConfig.direction === 'ascending' ? 1 : -1;
-      }
-      return 0;
-    });
-  };
-  
-  const requestSort = (key) => {
-    let direction = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-    setSortConfig({ key, direction });
   };
 
   const handleBookingClick = (booking) => {
@@ -245,26 +241,34 @@ const Dashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortBookings(recentBookings, sortConfig).map((booking) => (
-                      <tr key={booking.bookingID} onClick={() => handleBookingClick(booking)}>
-                        <td>{booking.bookingID}</td>
-                        <td>{booking.renterDetails.name}</td>
-                        <td>{booking.bookingDetails.vehicle}</td>
-                        <td>{booking.rentDateTime}</td>
-                        <td>{booking.returnDateTime}</td>
-                        <td><span className="status confirmed">{booking.status}</span></td>
-                        <td>
-                          {userAvatars[booking.savedBy?.email] && (
-                            <img 
-                              src={userAvatars[booking.savedBy.email]} 
-                              alt={`Booked by ${booking.savedBy?.email || 'Unknown'}`} 
-                              className="booker-avatar"
-                              onError={(e) => { e.target.style.display = 'none'; }}
-                            />
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                    {recentBookings.map((booking) => {
+                      const status = booking.status || 'Unknown';
+
+                      return (
+                        <tr key={booking.bookingID} onClick={() => handleBookingClick(booking)}>
+                          <td>{booking.bookingID}</td>
+                          <td>{booking.renterDetails.name}</td>
+                          <td>{booking.bookingDetails.vehicle}</td>
+                          <td>{booking.rentDateTime}</td>
+                          <td>{booking.returnDateTime}</td>
+                          <td>
+                            <span className={`status ${status.toLowerCase()}`}>
+                              {status}
+                            </span>
+                          </td>
+                          <td>
+                            {userAvatars[booking.savedBy?.email] && (
+                              <img 
+                                src={userAvatars[booking.savedBy.email]} 
+                                alt={`Booked by ${booking.savedBy?.email || 'Unknown'}`} 
+                                className="booker-avatar"
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
                 <div className="pagination">
@@ -293,14 +297,14 @@ const Dashboard = () => {
         onClose={closeBookingModal}
         currentUser={user}
         selectedDate={bookingModalDate}
-        refreshBookings={() => fetchDashboardData(currentPage)}
+        refreshBookings={fetchDashboardData}
       />
 
       <BookingDetailsModal
         isOpen={isBookingDetailsModalOpen}
         onClose={closeBookingDetailsModal}
         booking={selectedBooking}
-        refreshBookings={() => fetchDashboardData(currentPage)}
+        refreshBookings={fetchDashboardData}
       />
     </div>
   );

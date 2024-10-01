@@ -145,14 +145,15 @@ th, td {
   font-size: 0.75rem;
 }
 
+.confirmed { background-color: #2ecc71; color: white; }
+.pending { background-color: #f39c12; color: white; }
+.unknown { background-color: gray; color: white; } /* New class for unknown statuses */
+
 .booker-avatar {
   width: 24px;
   height: 24px;
   border-radius: 50%;
 }
-
-.confirmed { background-color: #2ecc71; color: white; }
-.pending { background-color: #f39c12; color: white; }
 
 .fab {
   position: fixed;

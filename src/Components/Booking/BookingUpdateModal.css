@@ -72,4 +72,30 @@
     background-color: #dc3545;
     color: white;
   }
+  .delete-section {
+    padding: 10px;
+    text-align: center;
+  }
   
+  .delete-confirmation-modal {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 300px;
+  }
+  
+  .delete-confirmation-modal h3 {
+    margin-top: 0;
+  }
+  
+  .delete-confirmation-modal input {
+    width: 100%;
+    padding: 5px;
+    margin: 10px 0;
+  }
+  
+  .delete-confirmation-modal .modal-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }

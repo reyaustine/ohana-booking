@@ -9,6 +9,7 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
   const [renterDetails, setRenterDetails] = useState({
     name: '',
     mobile: '',
+    facebookName: '', // New field for Facebook Name
   });
   const [bookingDetails, setBookingDetails] = useState({
     vehicle: '',
@@ -45,6 +46,7 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
     const newErrors = {};
     if (!renterDetails.name) newErrors.name = 'Name is required';
     if (!renterDetails.mobile) newErrors.mobile = 'Mobile number is required';
+    if (!renterDetails.facebookName) newErrors.facebookName = 'Facebook Name is required'; // Validation for Facebook Name
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [renterDetails]);
@@ -119,14 +121,14 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
     try {
       await setDoc(doc(db, 'bookings', bookingID), {
         bookingID,
-        renterDetails,
+        renterDetails, // Include Facebook Name in the renter details
         bookingDetails: {
           ...bookingDetails,
           rentDate: `${bookingDetails.rentDate} ${bookingDetails.rentTime}`,
           returnDate: bookingDetails.returnDate
         },
         createdAt: new Date(),
-        savedBy: currentUser || 'Unknown',
+        savedBy: currentUser ? currentUser.email : 'Unknown',  // Save user who created the booking
         updatedBy: 'N/A',
         updatedDate: 'N/A',
         active: 'Yes',
@@ -135,7 +137,7 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
       });
       alert('Booking completed successfully!');
       // Reset all fields
-      setRenterDetails({ name: '', mobile: '' });
+      setRenterDetails({ name: '', mobile: '', facebookName: '' });
       setBookingDetails({
         vehicle: '',
         rentDate: '',
@@ -201,6 +203,16 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
                   onChange={(e) => setRenterDetails({ ...renterDetails, mobile: e.target.value })}
                 />
                 {errors.mobile && <span className="error">{errors.mobile}</span>}
+              </div>
+              <div className="form-group">
+                <label htmlFor="facebookName">Facebook Name</label> {/* Add Facebook Name field */}
+                <input
+                  type="text"
+                  id="facebookName"
+                  value={renterDetails.facebookName}
+                  onChange={(e) => setRenterDetails({ ...renterDetails, facebookName: e.target.value })}
+                />
+                {errors.facebookName && <span className="error">{errors.facebookName}</span>}
               </div>
               <div className="form-group">
                 <label htmlFor="upload">Upload ID</label>
@@ -312,6 +324,7 @@ const BookingModal = ({ isOpen, onClose, currentUser, selectedDate }) => {
                 <p><strong>Booking ID:</strong> {bookingID}</p>
                 <p><strong>Renter Name:</strong> {renterDetails.name}</p>
                 <p><strong>Mobile Number:</strong> {renterDetails.mobile}</p>
+                <p><strong>Facebook Name:</strong> {renterDetails.facebookName}</p> {/* Display Facebook Name */}
                 <p><strong>Vehicle:</strong> {bookingDetails.vehicle}</p>
                 <p><strong>Rent Date:</strong> {bookingDetails.rentDate} {bookingDetails.rentTime}</p>
                 <p><strong>Rent Duration:</strong> {bookingDetails.rentDuration} hours</p>
